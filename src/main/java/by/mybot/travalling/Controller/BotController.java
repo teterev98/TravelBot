@@ -58,7 +58,7 @@ public class BotController extends TelegramLongPollingBot {
     private void sendCity(Message message) {
         final RestTemplate restTemplate = new RestTemplate();
         String name = toTemplate(message);
-        final City city = restTemplate.getForObject("http://localhost:8080/travel/", City.class);
+        final City city = restTemplate.getForObject("http://localhost:8080/travel/" + name, City.class);
         if (city == null) {
             sendMsg(message, "Город '" + name + "' не найден");
         } else {
