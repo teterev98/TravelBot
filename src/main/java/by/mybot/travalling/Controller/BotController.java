@@ -1,7 +1,6 @@
 package by.mybot.travalling.Controller;
 
 import by.mybot.travalling.Domain.City;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -15,8 +14,9 @@ import java.util.regex.Pattern;
 
 @Controller
 public class BotController extends TelegramLongPollingBot {
-    @Value("${url}")
-    private String url;
+
+    private final String url = "http://localhost:8080/travel/";
+    private final RestTemplate rest = new RestTemplate();
 
     @Override
     public String getBotUsername() {
@@ -56,9 +56,8 @@ public class BotController extends TelegramLongPollingBot {
     }
 
     private void sendCity(Message message) {
-        final RestTemplate restTemplate = new RestTemplate();
         String name = toTemplate(message);
-        final City city = restTemplate.getForObject("http://localhost:8080/travel/" + name, City.class);
+        final City city = rest.getForObject(url + name, City.class);
         if (city == null) {
             sendMsg(message, "Город '" + name + "' не найден");
         } else {
@@ -72,31 +71,27 @@ public class BotController extends TelegramLongPollingBot {
     }
 
     private City addCity(String name, String description) {
-        final RestTemplate restTemplate = new RestTemplate();
-        City cityToAdd = restTemplate.getForObject("http://localhost:8080/travel/" + name, City.class);
+        City cityToAdd = rest.getForObject(url + name, City.class);
         if (cityToAdd == null) {
             cityToAdd = City.builder().setDescription(description).setName(name).build();
-            final City insertedCity = restTemplate.postForObject("http://localhost:8080/travel/",
+            final City insertedCity = rest.postForObject(url,
                     cityToAdd, City.class);
             return insertedCity;
         } else return null;
     }
 
     private void deleteCity(String name) {
-        final RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete("http://localhost:8080/travelin/" + name);
+        rest.delete(url + name);
     }
 
     private void updateCity(String name, String description) {
-        final RestTemplate restTemplate = new RestTemplate();
         final City cityToUpdate = City.builder().setDescription(description).setName(name).build();
 
-        restTemplate.put("http://localhost:8080/travel/" + name, cityToUpdate);
+        rest.put(url + name, cityToUpdate);
     }
 
     private void sendAllCities(Message message) {
-        final RestTemplate restTemplate = new RestTemplate();
-        final City[] cities = restTemplate.getForObject("http://localhost:8080/travel/", City[].class);
+        final City[] cities = rest.getForObject(url, City[].class);
         if (cities == null) {
             sendMsg(message, "Не добавленно ни одного города");
         } else {
